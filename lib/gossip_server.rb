@@ -6,7 +6,7 @@ require "gossip_server/server"
 module GossipServer
   def self.run!
     options = {
-      seed: 0,
+      seed: nil,
       port: 8000
     }
 
@@ -20,7 +20,7 @@ module GossipServer
       end
     end
 
-    Server.set :gossiper, Gossiper.new(port: options[:port], seed: options[:seed])
+    Server.set :gossiper, Gossiper.new(id: options[:port].to_s, seed_id: options[:seed])
     Server.set :port, options[:port]
     Server.run!
   end
