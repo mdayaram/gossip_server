@@ -18,9 +18,12 @@ module GossipServer
       opts.on("--seed N", Integer, "The seed port to fetch initial peers from; defaults to no seeds") do |v|
         options[:seed] = v
       end
-    end
+    end.parse!
 
-    Server.set :gossiper, Gossiper.new(id: options[:port].to_s, seed_id: options[:seed])
+    gossiper = Gossiper.new(id: options[:port].to_s, seed_id: options[:seed])
+    gossiper.fetch_peers!
+
+    Server.set :gossiper, gossiper
     Server.set :port, options[:port]
     Server.run!
   end
