@@ -13,5 +13,10 @@ module GossipServer
       result = settings.gossiper.gossip_handler(msg)
       JSON.generate(result)
     end
+
+    get "/" do
+      content_type "text/plain"
+      settings.gossiper.to_s
+    end
   end
 end

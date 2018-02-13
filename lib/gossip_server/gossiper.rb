@@ -74,11 +74,24 @@ module GossipServer
       return if peers_to_gossip.empty?
 
       peers_to_gossip.each do |p|
-        res = HTTP.post("#{peer_host(p)}/gossip", json: message_cache).to_s
+        res = HTTP.post("#{peer_host(p)}/gossip", json: messages_cache).to_s
 
         # If this peer did not like our gossip, remove it from our network
         peers.delete(p) if res != "OK"
       end
+    end
+
+    def to_s
+      ["ID: #{my_id}",
+       "Peers: #{peers.to_a.join(" ")}",
+       (["World State:"] + world_state.keys.map do |id|
+         "#{id}:v#{world_state[id][:version]} #{world_state[id][:payload]}"
+       end.to_a).join("\n\t"),
+       (["Seen Messages:"] + messages_seen.to_a).join("\n\t"),
+       (["Message Cache:"] + messages_cache.map do |m|
+         "#{m[:uuid]} id=#{m[:client_id]} v=#{m[:version]} ttl=#{m[:ttl]} payload=#{m[:payload]}"
+       end).join("\n\t")
+      ].join("\n\n")
     end
 
     private
