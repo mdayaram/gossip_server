@@ -111,11 +111,11 @@ module GossipServer
       ["My State: id=#{my_id} v=#{world_state[my_id][:version]} payload=#{world_state[my_id][:payload]}",
        "Peers: #{peers.to_a.join(" ")}",
        (["World State:"] + world_state.keys.sort.map do |id|
-         "#{id}:v#{world_state[id][:version]} #{world_state[id][:payload]}"
+         "#{id}: #{message_to_s(world_state[id])}"
        end.to_a).join("\n\t"),
        (["Seen Messages:"] + messages_seen.to_a).join("\n\t"),
        (["Message Cache (most recent on top):"] + messages_cache.reverse.map do |m|
-         "#{m[:uuid]} id=#{m[:client_id]} v=#{m[:version]} ttl=#{m[:ttl]} payload=#{m[:payload]}"
+         message_to_s(m)
        end).join("\n\t")
       ].join("\n\n")
     end
@@ -123,7 +123,13 @@ module GossipServer
     private
 
     def absorb_message(uuid:, client_id:, version:, payload:, ttl:)
-      debug "message: v=#{version} ttl=#{ttl} payload=#{payload}" if client_id == my_id
+      debug message_to_s(
+        uuid: uuid,
+        client_id: client_id,
+        version: version,
+        payload: payload,
+        ttl: ttl
+      ) if client_id == my_id
 
       # Ignore messages we've seen or have had their TTL expire.
       return if ttl <= 0 || messages_seen.include?(uuid)
@@ -158,6 +164,16 @@ module GossipServer
 
     def peer_host(peer_id)
       "http://localhost:#{peer_id}"
+    end
+
+    def message_to_s(m)
+      msg = ""
+      msg += "#{m[:uuid]} " if m[:uuid]
+      msg += "id=#{m[:client_id]} " if m[:client_id]
+      msg += "v=#{m[:version]} " if m[:version]
+      msg += "ttl=#{m[:ttl]} " if m[:ttl]
+      msg += "payload=#{m[:payload]}" if m[:payload]
+      msg
     end
   end
 end
