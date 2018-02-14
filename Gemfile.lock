@@ -2,8 +2,9 @@ PATH
   remote: .
   specs:
     gossip_server (0.1.0)
-      http
-      sinatra
+      http (~> 3.0.0)
+      rufus-scheduler (~> 3.4.2)
+      sinatra (~> 2.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -15,6 +16,8 @@ GEM
     diff-lcs (1.3)
     domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
+    et-orbi (1.0.9)
+      tzinfo
     http (3.0.0)
       addressable (~> 2.3)
       http-cookie (~> 1.0)
@@ -50,12 +53,17 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.7.0)
     rspec-support (3.7.1)
+    rufus-scheduler (3.4.2)
+      et-orbi (~> 1.0)
     sinatra (2.0.0)
       mustermann (~> 1.0)
       rack (~> 2.0)
       rack-protection (= 2.0.0)
       tilt (~> 2.0)
+    thread_safe (0.3.6)
     tilt (2.0.8)
+    tzinfo (1.2.5)
+      thread_safe (~> 0.1)
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.5)

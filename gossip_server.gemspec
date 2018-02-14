@@ -21,8 +21,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "sinatra"
-  spec.add_dependency "http"
+  spec.add_dependency "sinatra", "~> 2.0.0"
+  spec.add_dependency "http", "~> 3.0.0"
+  spec.add_dependency "rufus-scheduler", "~> 3.4.2"
 
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"
