@@ -9,7 +9,7 @@ module GossipServer
     end
 
     post "/gossip" do
-      msg = JSON.parse(request.body.read)
+      msg = JSON.parse(request.body.read, symbolize_names: true)
       result = settings.gossiper.gossip_handler(msg)
       JSON.generate(result)
     end
