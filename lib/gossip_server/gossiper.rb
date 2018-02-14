@@ -19,7 +19,7 @@ module GossipServer
       @peers = Set.new
       @messages_seen = Set.new
       @messages_cache = []
-      @world_state = {}
+      @world_state = { my_id => { version: 0, payload: "" } }
 
       peers << seed_id.to_s if !seed_id.nil? && !seed_id.empty?
     end
@@ -99,7 +99,7 @@ module GossipServer
          "#{id}:v#{world_state[id][:version]} #{world_state[id][:payload]}"
        end.to_a).join("\n\t"),
        (["Seen Messages:"] + messages_seen.to_a).join("\n\t"),
-       (["Message Cache:"] + messages_cache.map do |m|
+       (["Message Cache (most recent on top):"] + messages_cache.reverse.map do |m|
          "#{m[:uuid]} id=#{m[:client_id]} v=#{m[:version]} ttl=#{m[:ttl]} payload=#{m[:payload]}"
        end).join("\n\t")
       ].join("\n\n")
@@ -117,7 +117,7 @@ module GossipServer
 
       # Cache these messages
       messages_seen << uuid
-      message_cache << {
+      messages_cache << {
         uuid: uuid,
         client_id: client_id,
         version: version,
