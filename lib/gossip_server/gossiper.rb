@@ -39,20 +39,18 @@ module GossipServer
     #   ttl:        int
     #   payload:    string
     def gossip_handler(client_id:, messages:)
-      return "ERROR" if client_id.nil? || client_id.empty? || messages.nil? || messages.empty?
+      return { status: "ERROR" } if client_id.nil? || client_id.empty? || messages.nil? || messages.empty?
 
       # Add this gossiper to our peers group.
       peers << client_id
 
-      # Ignore messages we've seen or have had their TTL expire.
-      messages = messages.select { |m| m[:ttl] > 0 && !messages_seen.include?(m[:uuid]) }
 
       # Update our world view
       messages.each do |m|
         absorb_message(m)
       end
 
-      "OK"
+      { status: "OK" }
     end
 
     def fetch_peers!
@@ -73,11 +71,26 @@ module GossipServer
       return if peers_to_gossip.empty?
 
       peers_to_gossip.each do |p|
-        res = HTTP.post("#{peer_host(p)}/gossip", json: {client_id: my_id, messages: messages_cache}).to_s
-
-        # If this peer did not like our gossip, remove it from our network
-        peers.delete(p) if res != "OK"
+        gossip_peer!(p)
       end
+    end
+
+    def gossip_peer!(peer_id)
+      raw_res = HTTP.post(
+        "#{peer_host(peer_id)}/gossip",
+        json: {client_id: my_id, messages: messages_cache}
+      ).to_s
+
+      res = JSON.parse(raw_res, symbolize_names: true)
+
+      # If this peer did not like our gossip, remove it from our network
+      if res[:status] != "OK"
+        puts "Removing peer #{peer_id} because response was: #{res}"
+        peers.delete(peer_id)
+      end
+    rescue HTTP::Error
+      puts "Removing peer #{peer_id} because could not gossip to them."
+      peers.delete(peer_id)
     end
 
     def change_my_mind(new_payload)
@@ -95,7 +108,7 @@ module GossipServer
     def to_s
       ["My State: id=#{my_id} v=#{world_state[my_id][:version]} payload=#{world_state[my_id][:payload]}",
        "Peers: #{peers.to_a.join(" ")}",
-       (["World State:"] + world_state.keys.map do |id|
+       (["World State:"] + world_state.keys.sort.map do |id|
          "#{id}:v#{world_state[id][:version]} #{world_state[id][:payload]}"
        end.to_a).join("\n\t"),
        (["Seen Messages:"] + messages_seen.to_a).join("\n\t"),
@@ -108,12 +121,20 @@ module GossipServer
     private
 
     def absorb_message(uuid:, client_id:, version:, payload:, ttl:)
+      #puts "message: v=#{version} ttl=#{ttl} payload=#{payload}" if client_id == my_id
+
+      # Ignore messages we've seen or have had their TTL expire.
+      return if ttl <= 0 || messages_seen.include?(uuid)
+
       # Update our world view
       update_world_state(
         client_id: client_id,
         version: version,
         payload: payload
       )
+
+      # Add client to peers list.
+      peers << client_id if client_id != my_id
 
       # Cache these messages
       messages_seen << uuid

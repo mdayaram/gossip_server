@@ -10,7 +10,7 @@ module GossipServer
       seed: nil,
       port: 8000,
       infection_factor: 2,
-      default_ttl: 2,
+      default_ttl: 3,
       gossip_interval: 10,
       fickle_interval: 15,
       payloads_file: File.join(__dir__, "assets", "books.txt"),
