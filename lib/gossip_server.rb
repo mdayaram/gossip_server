@@ -19,13 +19,13 @@ module GossipServer
 
     OptionParser.new do |opts|
       opts.on(
-        "--port N", Integer,
+        "-p", "--port N", Integer,
         "The port to listen gossip on; " +
         "defaults to #{options[:port]}"
       ) { |v| options[:port] = v }
 
       opts.on(
-        "--seed N", Integer,
+        "-s", "--seed N", Integer,
         "The seed port to fetch initial peers from; " +
         "defaults to no seeds"
       ) { |v| options[:seed] = v }
@@ -37,7 +37,7 @@ module GossipServer
       ) { |v| options[:infection_factor] = v }
 
       opts.on(
-        "--default-ttl N", Integer,
+        "--ttl N", Integer,
         "How many nodes messages will travel before being dropped; " +
         "defaults to #{options[:default_ttl]}"
       ) { |v| options[:default_ttl] = v }
