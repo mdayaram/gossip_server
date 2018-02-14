@@ -87,7 +87,7 @@ module GossipServer
     end
 
     def to_s
-      ["ID: #{my_id}",
+      ["My State: id=#{my_id} v=#{world_state[my_id][:version]} payload=#{world_state[my_id][:payload]}",
        "Peers: #{peers.to_a.join(" ")}",
        (["World State:"] + world_state.keys.map do |id|
          "#{id}:v#{world_state[id][:version]} #{world_state[id][:payload]}"
@@ -99,12 +99,6 @@ module GossipServer
       ].join("\n\n")
     end
 
-    private
-
-    def peer_host(peer_id)
-      "http://localhost:#{peer_id}"
-    end
-
     def update_world_state(client_id:, version:, payload:)
       if world_state[client_id].nil?
         world_state[client_id] = {version: version, payload: payload}
@@ -113,6 +107,12 @@ module GossipServer
       else
         world_state[client_id] # Keep current state, version was older.
       end
+    end
+
+    private
+
+    def peer_host(peer_id)
+      "http://localhost:#{peer_id}"
     end
   end
 end
