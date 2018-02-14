@@ -33,7 +33,12 @@ module GossipServer
     #   version:    int
     #   ttl:        int
     #   payload:    string
-    def gossip_handler(messages)
+    def gossip_handler(client_id:, messages:)
+      return "ERROR" if client_id.nil? || client_id.empty? || messages.nil? || messages.empty?
+
+      # Add this gossiper to our peers group.
+      peers << client_id
+
       # Ignore messages we've seen or have had their TTL expire.
       messages = messages.select { |m| m[:ttl] > 0 && !messages_seen.include?(m[:uuid]) }
 
@@ -74,7 +79,7 @@ module GossipServer
       return if peers_to_gossip.empty?
 
       peers_to_gossip.each do |p|
-        res = HTTP.post("#{peer_host(p)}/gossip", json: messages_cache).to_s
+        res = HTTP.post("#{peer_host(p)}/gossip", json: {client_id: my_id, messages: messages_cache}).to_s
 
         # If this peer did not like our gossip, remove it from our network
         peers.delete(p) if res != "OK"
