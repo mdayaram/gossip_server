@@ -135,9 +135,6 @@ module GossipServer
         payload: payload
       )
 
-      # Add client to peers list.
-      peers << client_id if client_id != my_id
-
       # Cache these messages
       messages_seen << uuid
       messages_cache << {
