@@ -3,6 +3,8 @@ require 'securerandom'
 
 module GossipServer
   class Gossiper
+    include Logging
+
     attr_reader :my_id
     attr_reader :infection_factor
     attr_reader :default_ttl
@@ -85,11 +87,11 @@ module GossipServer
 
       # If this peer did not like our gossip, remove it from our network
       if res[:status] != "OK"
-        puts "Removing peer #{peer_id} because response was: #{res}"
+        log "Removing peer #{peer_id} because response was: #{res}"
         peers.delete(peer_id)
       end
     rescue HTTP::Error
-      puts "Removing peer #{peer_id} because could not gossip to them."
+      log "Removing peer #{peer_id} because could not gossip to them."
       peers.delete(peer_id)
     end
 
@@ -121,7 +123,7 @@ module GossipServer
     private
 
     def absorb_message(uuid:, client_id:, version:, payload:, ttl:)
-      #puts "message: v=#{version} ttl=#{ttl} payload=#{payload}" if client_id == my_id
+      debug "message: v=#{version} ttl=#{ttl} payload=#{payload}" if client_id == my_id
 
       # Ignore messages we've seen or have had their TTL expire.
       return if ttl <= 0 || messages_seen.include?(uuid)

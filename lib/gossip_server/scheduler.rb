@@ -2,6 +2,8 @@ require 'rufus-scheduler'
 
 module GossipServer
   class Scheduler
+    include Logging
+
     attr_reader :gossiper
     attr_reader :gossip_interval
     attr_reader :fickle_interval
@@ -20,6 +22,8 @@ module GossipServer
     end
 
     def start!
+      debug "starting schedules"
+
       scheduler.every "#{gossip_interval}s" do
         gossip_run
       end
@@ -30,6 +34,7 @@ module GossipServer
     end
 
     def stop!
+      debug "stopping schedule"
       scheduler.shutdown
     end
 
@@ -41,10 +46,12 @@ module GossipServer
 
     def fickle_run
       new_payload = possible_payloads.sample
+      debug "picking a new payload: #{new_payload}"
       gossiper.change_my_mind(new_payload)
     end
 
     def gossip_run
+      debug "gossiping to my peers"
       gossiper.gossip_peers!
     end
   end

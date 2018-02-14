@@ -1,4 +1,5 @@
 require "optparse"
+require "gossip_server/logging"
 require "gossip_server/version"
 require "gossip_server/gossiper"
 require "gossip_server/scheduler"
@@ -58,6 +59,11 @@ module GossipServer
         "The filepath to the different payloads a server can hold, separated by new lines; " +
         "defaults to #{options[:payloads_file]}"
       ) { |v| options[:payloads_file] = v }
+
+      opts.on(
+        "-v", "--[no-]verbose",
+        "Turns on verbose/debugging output, default is false."
+      ) { |v| Logging.set_debug(v) }
     end.parse!
 
     gossiper = Gossiper.new(
