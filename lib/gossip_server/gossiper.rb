@@ -1,18 +1,21 @@
 require 'http'
+require 'securerandom'
 
 module GossipServer
   class Gossiper
     attr_reader :my_id
     attr_reader :infection_factor
+    attr_reader :default_ttl
     attr_reader :peers
     attr_reader :world_state
 
     attr_reader :messages_cache
     attr_reader :messages_seen
 
-    def initialize(id:, seed_id:, infection_factor:)
+    def initialize(id:, seed_id:, infection_factor:, default_ttl:)
       @my_id = id.to_s
-      @infection_factor = infection_factor
+      @infection_factor = infection_factor > 0 ? infection_factor : 2
+      @default_ttl = default_ttl > 0 ? default_ttl : 2
       @peers = Set.new
       @messages_seen = Set.new
       @messages_cache = []
@@ -46,18 +49,7 @@ module GossipServer
 
       # Update our world view
       messages.each do |m|
-        update_world_state(
-          client_id: m[:client_id],
-          version: m[:version],
-          payload: m[:payload]
-        )
-      end
-
-      # Cache these messages
-      messages.each do |m|
-        m[:ttl] -= 1
-        messages_cache << m
-        messages_seen << m[:uuid]
+        absorb_message(m)
       end
 
       "OK"
@@ -88,6 +80,18 @@ module GossipServer
       end
     end
 
+    def change_my_mind(new_payload)
+      message = {
+        uuid: SecureRandom.uuid,
+        version: world_state[my_id][:version] + 1,
+        ttl: default_ttl,
+        payload: new_payload,
+        client_id: my_id
+      }
+
+      absorb_message(message)
+    end
+
     def to_s
       ["My State: id=#{my_id} v=#{world_state[my_id][:version]} payload=#{world_state[my_id][:payload]}",
        "Peers: #{peers.to_a.join(" ")}",
@@ -101,6 +105,27 @@ module GossipServer
       ].join("\n\n")
     end
 
+    private
+
+    def absorb_message(uuid:, client_id:, version:, payload:, ttl:)
+      # Update our world view
+      update_world_state(
+        client_id: client_id,
+        version: version,
+        payload: payload
+      )
+
+      # Cache these messages
+      messages_seen << uuid
+      message_cache << {
+        uuid: uuid,
+        client_id: client_id,
+        version: version,
+        payload: payload,
+        ttl: ttl - 1
+      }
+    end
+
     def update_world_state(client_id:, version:, payload:)
       if world_state[client_id].nil?
         world_state[client_id] = {version: version, payload: payload}
@@ -110,8 +135,6 @@ module GossipServer
         world_state[client_id] # Keep current state, version was older.
       end
     end
-
-    private
 
     def peer_host(peer_id)
       "http://localhost:#{peer_id}"

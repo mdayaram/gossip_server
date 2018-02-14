@@ -8,7 +8,8 @@ module GossipServer
     options = {
       seed: nil,
       port: 8000,
-      infection_factor: 2
+      infection_factor: 2,
+      default_ttl: 2,
     }
 
     OptionParser.new do |opts|
@@ -23,12 +24,17 @@ module GossipServer
       opts.on("--infection-factor N", Integer, "The number of nodes to gossip to when gossiping; defaults to #{options[:infection_factor]}") do |v|
         options[:infection_factor] = v
       end
+
+      opts.on("--default-ttl N", Integer, "Time To Live for a message, in this case, how many nodes the message will travel before being dropped; defaults to #{options[:default_ttl]}") do |v|
+        options[:default_ttl] = v
+      end
     end.parse!
 
     gossiper = Gossiper.new(
       id: options[:port].to_s,
       seed_id: options[:seed].to_s,
-      infection_factor: infection_factor
+      infection_factor: options[:infection_factor].to_i,
+      default_ttl: options[:default_ttl].to_i
     )
 
     gossiper.fetch_peers!
