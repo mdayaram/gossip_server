@@ -3,20 +3,22 @@ require 'http'
 module GossipServer
   class Gossiper
     attr_reader :my_id
+    attr_reader :infection_factor
     attr_reader :peers
     attr_reader :world_state
 
     attr_reader :messages_cache
     attr_reader :messages_seen
 
-    def initialize(id:, seed_id:)
+    def initialize(id:, seed_id:, infection_factor:)
       @my_id = id.to_s
+      @infection_factor = infection_factor
       @peers = Set.new
       @messages_seen = Set.new
       @messages_cache = []
       @world_state = {}
 
-      peers << seed_id.to_s if seed_id
+      peers << seed_id.to_s if !seed_id.nil? && !seed_id.empty?
     end
 
     def peers_handler(client_id:)
@@ -75,7 +77,7 @@ module GossipServer
     end
 
     def gossip_peers!
-      peers_to_gossip = [peers.to_a.sample].compact # Only pick one for now.
+      peers_to_gossip = peers.to_a.sample(infection_factor)
       return if peers_to_gossip.empty?
 
       peers_to_gossip.each do |p|
