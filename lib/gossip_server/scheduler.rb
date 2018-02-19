@@ -46,7 +46,7 @@ module GossipServer
 
     def fickle_run
       new_payload = possible_payloads.sample
-      debug "picking a new payload: #{new_payload}"
+      debug "picking a new payload: #{new_payload.to_s}"
       gossiper.change_my_mind(new_payload)
     end
 

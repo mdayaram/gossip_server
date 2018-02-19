@@ -108,7 +108,7 @@ module GossipServer
     end
 
     def to_s
-      ["My State: id=#{my_id} v=#{world_state[my_id][:version]} payload=#{world_state[my_id][:payload]}",
+      ["My State: id=#{my_id} v=#{world_state[my_id][:version]} payload=#{world_state[my_id][:payload].to_s}",
        "Peers: #{peers.to_a.join(" ")}",
        (["World State:"] + world_state.keys.sort.map do |id|
          "#{id}: #{message_to_s(world_state[id])}"
@@ -172,7 +172,7 @@ module GossipServer
       msg += "id=#{m[:client_id]} " if m[:client_id]
       msg += "v=#{m[:version]} " if m[:version]
       msg += "ttl=#{m[:ttl]} " if m[:ttl]
-      msg += "payload=#{m[:payload]}" if m[:payload]
+      msg += "payload=#{m[:payload].to_s}" if m[:payload]
       msg
     end
   end
