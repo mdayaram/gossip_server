@@ -10,13 +10,13 @@ module GossipServer
 
     attr_reader :scheduler
 
-    def initialize(gossiper:, gossip_interval:, fickle_interval:)
+    def initialize(gossiper:, gossip_interval:, fickle_interval: nil)
       @gossiper = gossiper
       @gossip_interval = gossip_interval
       @fickle_interval = fickle_interval
 
       @scheduler = Rufus::Scheduler.new
-      fickle_run # pick something right away.
+      fickle_run if fickle_interval.to_i > 0 # pick something right away.
     end
 
     def start!
@@ -26,8 +26,10 @@ module GossipServer
         gossip_run
       end
 
-      scheduler.every "#{fickle_interval}s" do
-        fickle_run
+      if fickle_interval.to_i > 0
+        scheduler.every "#{fickle_interval}s" do
+          fickle_run
+        end
       end
     end
 
