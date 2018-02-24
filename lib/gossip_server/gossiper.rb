@@ -14,14 +14,14 @@ module GossipServer
     attr_reader :messages_cache
     attr_reader :messages_seen
 
-    def initialize(id:, seed_id:, infection_factor:, default_ttl:)
+    def initialize(id:, seed_id:, infection_factor:, default_ttl:, world_state:)
       @my_id = id.to_s
       @infection_factor = infection_factor > 0 ? infection_factor : 2
       @default_ttl = default_ttl > 0 ? default_ttl : 2
       @peers = Set.new
       @messages_seen = Set.new
       @messages_cache = []
-      @world_state = { my_id => { version: 0, payload: "" } }
+      @world_state = world_state
 
       peers << seed_id.to_s if !seed_id.nil? && !seed_id.empty?
     end
@@ -95,12 +95,11 @@ module GossipServer
       peers.delete(peer_id)
     end
 
-    def change_my_mind(new_payload)
+    def add_payload(new_payload)
       message = {
         uuid: SecureRandom.uuid,
-        version: world_state[my_id][:version] + 1,
-        ttl: default_ttl,
         payload: new_payload,
+        ttl: default_ttl,
         client_id: my_id
       }
 
@@ -108,11 +107,11 @@ module GossipServer
     end
 
     def to_s
-      ["My State: id=#{my_id} v=#{world_state[my_id][:version]} payload=#{world_state[my_id][:payload].to_s}",
+      ["My State: #{world_state.my_s}",
        "Peers: #{peers.to_a.join(" ")}",
-       (["World State:"] + world_state.keys.sort.map do |id|
-         "#{id}: #{message_to_s(world_state[id])}"
-       end.to_a).join("\n\t"),
+       "World State:",
+       world_state.to_s,
+       "",
        (["Seen Messages:"] + messages_seen.to_a).join("\n\t"),
        (["Message Cache (most recent on top):"] + messages_cache.reverse.map do |m|
          message_to_s(m)
@@ -122,11 +121,10 @@ module GossipServer
 
     private
 
-    def absorb_message(uuid:, client_id:, version:, payload:, ttl:)
+    def absorb_message(uuid:, client_id:, payload:, ttl:)
       debug message_to_s(
         uuid: uuid,
         client_id: client_id,
-        version: version,
         payload: payload,
         ttl: ttl
       ) if client_id == my_id
@@ -135,31 +133,16 @@ module GossipServer
       return if ttl <= 0 || messages_seen.include?(uuid)
 
       # Update our world view
-      update_world_state(
-        client_id: client_id,
-        version: version,
-        payload: payload
-      )
+      world_state.update_world_state(client_id: client_id, payload: payload)
 
       # Cache these messages
       messages_seen << uuid
       messages_cache << {
         uuid: uuid,
         client_id: client_id,
-        version: version,
         payload: payload,
         ttl: ttl - 1
       }
-    end
-
-    def update_world_state(client_id:, version:, payload:)
-      if world_state[client_id].nil?
-        world_state[client_id] = {version: version, payload: payload}
-      elsif world_state[client_id][:version] < version
-        world_state[client_id] = {version: version, payload: payload}
-      else
-        world_state[client_id] # Keep current state, version was older.
-      end
     end
 
     def peer_host(peer_id)
@@ -170,7 +153,6 @@ module GossipServer
       msg = ""
       msg += "#{m[:uuid]} " if m[:uuid]
       msg += "id=#{m[:client_id]} " if m[:client_id]
-      msg += "v=#{m[:version]} " if m[:version]
       msg += "ttl=#{m[:ttl]} " if m[:ttl]
       msg += "payload=#{m[:payload].to_s}" if m[:payload]
       msg

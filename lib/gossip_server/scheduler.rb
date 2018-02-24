@@ -7,17 +7,15 @@ module GossipServer
     attr_reader :gossiper
     attr_reader :gossip_interval
     attr_reader :fickle_interval
-    attr_reader :possible_payloads
 
     attr_reader :scheduler
 
-    def initialize(gossiper:, gossip_interval:, fickle_interval:, payloads_file:)
+    def initialize(gossiper:, gossip_interval:, fickle_interval:)
       @gossiper = gossiper
       @gossip_interval = gossip_interval
       @fickle_interval = fickle_interval
 
       @scheduler = Rufus::Scheduler.new
-      @possible_payloads = File.read(payloads_file).split("\n")
       fickle_run # pick something right away.
     end
 
@@ -45,9 +43,9 @@ module GossipServer
     private
 
     def fickle_run
-      new_payload = possible_payloads.sample
+      new_payload = gossiper.world_state.next_state
       debug "picking a new payload: #{new_payload.to_s}"
-      gossiper.change_my_mind(new_payload)
+      gossiper.add_payload(new_payload)
     end
 
     def gossip_run

@@ -4,6 +4,8 @@ require "gossip_server/version"
 require "gossip_server/gossiper"
 require "gossip_server/scheduler"
 require "gossip_server/server"
+require "gossip_server/world_state"
+require "gossip_server/books_world_state"
 
 module GossipServer
   def self.run!
@@ -66,19 +68,25 @@ module GossipServer
       ) { |v| Logging.set_debug(v) }
     end.parse!
 
+    world_state = BooksWorldState.new(
+      id: options[:port].to_s,
+      books_file:options[:payloads_file]
+    )
+
     gossiper = Gossiper.new(
       id: options[:port].to_s,
       seed_id: options[:seed].to_s,
       infection_factor: options[:infection_factor].to_i,
-      default_ttl: options[:default_ttl].to_i
+      default_ttl: options[:default_ttl].to_i,
+      world_state: world_state
     )
+
     gossiper.fetch_peers!
 
     scheduler = Scheduler.new(
       gossiper: gossiper,
       gossip_interval: options[:gossip_interval],
-      fickle_interval: options[:fickle_interval],
-      payloads_file: options[:payloads_file]
+      fickle_interval: options[:fickle_interval]
     )
     scheduler.start!
 
