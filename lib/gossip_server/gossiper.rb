@@ -41,14 +41,13 @@ module GossipServer
     #   ttl:        int
     #   payload:    string
     def gossip_handler(client_id:, messages:)
-      return { status: "ERROR" } if client_id.nil? || client_id.empty? || messages.nil? || messages.empty?
+      return { status: "ERROR" } if client_id.nil? || client_id.empty?
 
       # Add this gossiper to our peers group.
       peers << client_id
 
-
       # Update our world view
-      messages.each do |m|
+      (messages || []).each do |m|
         absorb_message(m)
       end
 
